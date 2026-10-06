@@ -36,23 +36,39 @@ public class UsersController : Controller
     {
         if (userCreate is null)
             return BadRequest();
-        
-        if (!string.IsNullOrEmpty(userCreate.Login))
-        {
-            if (userCreate.Login.Any(symbol => !char.IsLetterOrDigit(symbol)))
-                ModelState.AddModelError(
-                    "Login",
-                    "Логин должен состоять только из букв и цифр.");
-        }
 
         if (!ModelState.IsValid)
-        {
             return UnprocessableEntity(ModelState);
-        }
+        
         var createdUserEntity = userRepository.Insert(mapper.Map<UserEntity>(userCreate));
         return CreatedAtRoute(
             nameof(GetUserById),
             new { userId = createdUserEntity.Id },
             createdUserEntity.Id);
+    }
+    
+    [HttpPut("{userId}")]
+    public IActionResult UpdateUser(Guid userId, [FromBody] UserUpdateDto? userUpdate)
+    {
+        if (userUpdate is null | userId.Equals(Guid.Empty))
+            return BadRequest();
+
+        if (!ModelState.IsValid)
+            return UnprocessableEntity(ModelState);
+
+        var userEntity = mapper.Map(
+            userUpdate,
+            new UserEntity(userId));
+        
+        userRepository.UpdateOrInsert(userEntity, out var isInserted);
+
+        if (isInserted)
+        {
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new { userId },
+                userId);
+        }
+        return NoContent();
     }
 }
