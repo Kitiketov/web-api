@@ -100,4 +100,17 @@ public class UsersController : Controller
 
         return NoContent();
     }
+    
+    [HttpDelete("{userId}")]
+    public IActionResult DeleteUser(Guid userId)
+    {
+        var userEntity = userRepository.FindById(userId);
+        
+        if (userEntity is null)
+            return NotFound();
+
+        userRepository.Delete(userId);
+
+        return NoContent();
+    }
 }
